@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lista de Tarefas</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/static/style.css"/>
+</head>
+<body>
+
+  <div id="tela-auth" class="auth-wrapper">
+    <div class="auth-card">
+      <h1>Lista de <span>Tarefas</span></h1>
+      <p class="subtitulo">Entre na sua conta ou crie uma nova</p>
+
+      <div class="tabs">
+        <button class="tab ativo" onclick="mostrarAba('login')">Entrar</button>
+        <button class="tab"       onclick="mostrarAba('cadastro')">Cadastrar</button>
+      </div>
+
+      <div id="form-login">
+        <div class="campo">
+          <label>E-mail</label>
+          <input id="login-email" type="email" placeholder="seu@email.com"/>
+        </div>
+        <div class="campo">
+          <label>Senha</label>
+          <input id="login-senha" type="password" placeholder="••••••"/>
+        </div>
+        <button class="btn-principal" onclick="fazerLogin()">Entrar</button>
+      </div>
+
+      <div id="form-cadastro" style="display:none">
+        <div class="campo">
+          <label>Nome</label>
+          <input id="cad-nome" type="text" placeholder="Seu nome"/>
+        </div>
+        <div class="campo">
+          <label>E-mail</label>
+          <input id="cad-email" type="email" placeholder="seu@email.com"/>
+        </div>
+        <div class="campo">
+          <label>Senha <small>(mínimo 6 caracteres)</small></label>
+          <input id="cad-senha" type="password" placeholder="••••••"/>
+        </div>
+        <button class="btn-principal" onclick="fazerCadastro()">Criar conta</button>
+      </div>
+
+      <div id="msg" class="msg" style="display:none"></div>
+    </div>
+  </div>
+
+  <div id="tela-home" class="container" style="display:none">
+    <header>
+      <h1>Lista de <span>Tarefas</span></h1>
+      <p class="subtitulo">Olá, <strong id="nome-usuario"></strong> 👋 Você está logado!</p>
+    </header>
+    <div class="home-card">
+      <p>✅ Login realizado com sucesso!</p>
+      <button class="btn-outline" onclick="fazerLogout()">Sair da conta</button>
+    </div>
+  </div>
+
+  <script src="/static/script.js"></script>
+</body>
+</html>
