@@ -47,19 +47,46 @@
         <button class="btn-principal" onclick="fazerCadastro()">Criar conta</button>
       </div>
 
-      <div id="msg" class="msg" style="display:none"></div>
+      <div id="msg-auth" class="msg" style="display:none"></div>
     </div>
   </div>
 
   <div id="tela-home" class="container" style="display:none">
+
     <header>
-      <h1>Lista de <span>Tarefas</span></h1>
-      <p class="subtitulo">Olá, <strong id="nome-usuario"></strong> 👋 Você está logado!</p>
+      <div class="header-row">
+        <div>
+          <h1>Lista de <span>Tarefas</span></h1>
+          <p class="subtitulo">Olá, <strong id="nome-usuario"></strong> 👋</p>
+        </div>
+        <button class="btn-outline" onclick="fazerLogout()">Sair</button>
+      </div>
     </header>
-    <div class="home-card">
-      <p>✅ Login realizado com sucesso!</p>
-      <button class="btn-outline" onclick="fazerLogout()">Sair da conta</button>
+
+    <div class="stats">
+      <div class="stat"><strong id="total">0</strong>Total</div>
+      <div class="stat"><strong id="pendentes">0</strong>Pendentes</div>
     </div>
+
+    <div class="form-card">
+      <h2>Nova Tarefa</h2>
+      <div class="form-row">
+        <input id="input-titulo" type="text" placeholder="Título da tarefa *" maxlength="100"/>
+        <textarea id="input-desc" placeholder="Descrição (opcional)" maxlength="300"></textarea>
+        <div id="msg-erro" class="erro" style="display:none">Por favor, preencha o título!</div>
+        <button class="btn-principal btn-add" onclick="adicionarTarefa()">+ Adicionar Tarefa</button>
+      </div>
+    </div>
+
+    <div id="lista-tarefas">
+      <div class="loading">Carregando tarefas...</div>
+    </div>
+
+    <div id="vazio" class="vazio" style="display:none">
+      <span>📋</span>
+      Nenhuma tarefa ainda.<br/>Adicione sua primeira tarefa acima!
+    </div>
+
   </div>
 
   <script src="/static/script.js"></script>
