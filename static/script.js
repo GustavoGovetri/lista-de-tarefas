@@ -92,7 +92,7 @@ function mostrarHome(nome) {
 async function buscarTarefas() {
   try {
     const r = await fetch('/api/tarefas');
-    if (r.status === 401) { mostrarAuth(); return; }
+    if (r.status === 401) { fazerLogout(); return; }
     tarefas = await r.json();
     renderizarTabela();
   } catch {
@@ -129,12 +129,32 @@ async function adicionarTarefa() {
   }
 }
 
-function renderizarTabela() {
-  const container = document.getElementById('lista-tarefas');
-  const vazio     = document.getElementById('vazio');
+async function toggleTarefa(id) {
+  const r = await fetch(`/api/tarefas/${id}/toggle`, { method: 'PUT' });
+  if (r.ok) {
+    const atualizada = await r.json();
+    tarefas = tarefas.map(t => t.id === id ? atualizada : t);
+    renderizarTabela();
+  }
+}
 
-  document.getElementById('total').textContent    = tarefas.length;
-  document.getElementById('pendentes').textContent = tarefas.length;
+async function apagarTarefa(id) {
+  if (!confirm('Tem certeza que deseja apagar esta tarefa?')) return;
+
+  const r = await fetch(`/api/tarefas/${id}`, { method: 'DELETE' });
+  if (r.ok) {
+    tarefas = tarefas.filter(t => t.id !== id);
+    renderizarTabela();
+  }
+}
+
+function renderizarTabela() {
+  const container  = document.getElementById('lista-tarefas');
+  const vazio      = document.getElementById('vazio');
+
+  document.getElementById('total').textContent     = tarefas.length;
+  document.getElementById('pendentes').textContent = tarefas.filter(t => !t.feita).length;
+  document.getElementById('concluidas').textContent = tarefas.filter(t => t.feita).length;
 
   if (tarefas.length === 0) {
     container.innerHTML  = '';
@@ -146,16 +166,29 @@ function renderizarTabela() {
   container.innerHTML = `
     <div class="tabela-wrapper">
       <div class="tabela-header">
+        <div></div>
         <div>Tarefa</div>
-        <div style="text-align:right">Criada em</div>
+        <div>Status</div>
+        <div></div>
       </div>
       ${tarefas.map(t => `
-        <div class="tabela-linha">
+        <div class="tabela-linha ${t.feita ? 'feita' : ''}">
+          <div
+            class="checkbox ${t.feita ? 'checked' : ''}"
+            onclick="toggleTarefa(${t.id})"
+            title="${t.feita ? 'Marcar como pendente' : 'Marcar como concluída'}"
+          ></div>
           <div>
             <div class="cel-titulo">${escaparHTML(t.titulo)}</div>
             ${t.descricao ? `<div class="cel-desc">${escaparHTML(t.descricao)}</div>` : ''}
           </div>
-          <div class="cel-data">${t.criada_em}</div>
+          <div class="cel-status">
+            ${t.feita
+              ? '<span class="badge-concluida">✓ Feita</span>'
+              : '<span class="badge-pendente">⏳ Pendente</span>'
+            }
+          </div>
+          <button class="btn-del" onclick="apagarTarefa(${t.id})" title="Apagar tarefa">✕</button>
         </div>
       `).join('')}
     </div>
