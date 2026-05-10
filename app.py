@@ -5,7 +5,6 @@ import sqlite3
 app = Flask(__name__, static_folder='static', static_url_path='/static')
 app.secret_key = 'chave-secreta-123'
 
-
 def get_db():
     conn = sqlite3.connect('usuarios.db')
     conn.row_factory = sqlite3.Row
@@ -30,6 +29,7 @@ def init_db():
             usuario_id INTEGER NOT NULL,
             titulo     TEXT    NOT NULL,
             descricao  TEXT    DEFAULT '',
+            feita      INTEGER DEFAULT 0,
             criada_em  TEXT    DEFAULT (datetime('now','localtime')),
             FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
         )
@@ -65,7 +65,6 @@ def cadastrar():
         return jsonify({'erro': 'A senha deve ter pelo menos 6 caracteres'}), 400
 
     senha_hash = generate_password_hash(senha)
-
     try:
         conn = get_db()
         conn.execute(
@@ -140,6 +139,50 @@ def criar_tarefa():
     ).fetchone()
     conn.close()
     return jsonify(dict(nova)), 201
+
+@app.route('/api/tarefas/<int:tarefa_id>/toggle', methods=['PUT'])
+@login_obrigatorio
+def toggle_tarefa(tarefa_id):
+    conn   = get_db()
+    tarefa = conn.execute(
+        'SELECT * FROM tarefas WHERE id = ? AND usuario_id = ?',
+        (tarefa_id, session['usuario_id'])
+    ).fetchone()
+
+    if not tarefa:
+        conn.close()
+        return jsonify({'erro': 'Tarefa nao encontrada'}), 404
+
+    conn.execute(
+        'UPDATE tarefas SET feita = NOT feita WHERE id = ?', (tarefa_id,)
+    )
+    conn.commit()
+    atualizada = conn.execute(
+        'SELECT * FROM tarefas WHERE id = ?', (tarefa_id,)
+    ).fetchone()
+    conn.close()
+    return jsonify(dict(atualizada))
+
+@app.route('/api/tarefas/<int:tarefa_id>', methods=['DELETE'])
+@login_obrigatorio
+def deletar_tarefa(tarefa_id):
+    conn = get_db()
+    tarefa = conn.execute(
+        'SELECT * FROM tarefas WHERE id = ? AND usuario_id = ?',
+        (tarefa_id, session['usuario_id'])
+    ).fetchone()
+
+    if not tarefa:
+        conn.close()
+        return jsonify({'erro': 'Tarefa nao encontrada'}), 404
+
+    conn.execute(
+        'DELETE FROM tarefas WHERE id = ? AND usuario_id = ?',
+        (tarefa_id, session['usuario_id'])
+    )
+    conn.commit()
+    conn.close()
+    return jsonify({'mensagem': 'Tarefa apagada!'})
 
 if __name__ == '__main__':
     init_db()
