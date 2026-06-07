@@ -140,7 +140,6 @@ async function toggleTarefa(id) {
 
 async function apagarTarefa(id) {
   if (!confirm('Tem certeza que deseja apagar esta tarefa?')) return;
-
   const r = await fetch(`/api/tarefas/${id}`, { method: 'DELETE' });
   if (r.ok) {
     tarefas = tarefas.filter(t => t.id !== id);
@@ -148,13 +147,60 @@ async function apagarTarefa(id) {
   }
 }
 
+function abrirModal(id) {
+  const tarefa = tarefas.find(t => t.id === id);
+  if (!tarefa) return;
+
+  document.getElementById('edit-id').value         = tarefa.id;
+  document.getElementById('edit-titulo').value     = tarefa.titulo;
+  document.getElementById('edit-desc').value       = tarefa.descricao;
+  document.getElementById('msg-edit-erro').style.display = 'none';
+  document.getElementById('modal-overlay').style.display = 'flex';
+  document.getElementById('edit-titulo').focus();
+}
+
+function fecharModal() {
+  document.getElementById('modal-overlay').style.display = 'none';
+}
+
+async function salvarEdicao() {
+  const id        = parseInt(document.getElementById('edit-id').value);
+  const titulo    = document.getElementById('edit-titulo').value.trim();
+  const descricao = document.getElementById('edit-desc').value.trim();
+  const msgErro   = document.getElementById('msg-edit-erro');
+
+  if (!titulo) {
+    msgErro.style.display = 'block';
+    document.getElementById('edit-titulo').focus();
+    return;
+  }
+  msgErro.style.display = 'none';
+
+  const r = await fetch(`/api/tarefas/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ titulo, descricao })
+  });
+
+  if (r.ok) {
+    const atualizada = await r.json();
+    tarefas = tarefas.map(t => t.id === id ? atualizada : t);
+    renderizarTabela();
+    fecharModal();
+  }
+}
+
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape') fecharModal();
+});
+
 function renderizarTabela() {
   const container  = document.getElementById('lista-tarefas');
   const vazio      = document.getElementById('vazio');
 
-  document.getElementById('total').textContent     = tarefas.length;
-  document.getElementById('pendentes').textContent = tarefas.filter(t => !t.feita).length;
-  document.getElementById('concluidas').textContent = tarefas.filter(t => t.feita).length;
+  document.getElementById('total').textContent      = tarefas.length;
+  document.getElementById('pendentes').textContent  = tarefas.filter(t => !t.feita).length;
+  document.getElementById('concluidas').textContent = tarefas.filter(t =>  t.feita).length;
 
   if (tarefas.length === 0) {
     container.innerHTML  = '';
@@ -188,7 +234,10 @@ function renderizarTabela() {
               : '<span class="badge-pendente">⏳ Pendente</span>'
             }
           </div>
-          <button class="btn-del" onclick="apagarTarefa(${t.id})" title="Apagar tarefa">✕</button>
+          <div class="cel-acoes">
+            <button class="btn-edit" onclick="abrirModal(${t.id})" title="Editar tarefa">✏️</button>
+            <button class="btn-del"  onclick="apagarTarefa(${t.id})" title="Apagar tarefa">✕</button>
+          </div>
         </div>
       `).join('')}
     </div>
