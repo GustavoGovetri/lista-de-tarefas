@@ -52,7 +52,6 @@
   </div>
 
   <div id="tela-home" class="container" style="display:none">
-
     <header>
       <div class="header-row">
         <div>
@@ -84,7 +83,27 @@
       <span>📋</span>
       Nenhuma tarefa ainda.<br/>Adicione sua primeira tarefa acima!
     </div>
+  </div>
 
+  <!-- Modal de edição -->
+  <div id="modal-overlay" class="modal-overlay" style="display:none" onclick="fecharModal()">
+    <div class="modal" onclick="event.stopPropagation()">
+      <h2>Editar Tarefa</h2>
+      <input type="hidden" id="edit-id"/>
+      <div class="campo">
+        <label>Título</label>
+        <input id="edit-titulo" type="text" placeholder="Título da tarefa *" maxlength="100"/>
+      </div>
+      <div class="campo">
+        <label>Descrição</label>
+        <textarea id="edit-desc" placeholder="Descrição (opcional)" maxlength="300"></textarea>
+      </div>
+      <div id="msg-edit-erro" class="erro" style="display:none">Por favor, preencha o título!</div>
+      <div class="modal-botoes">
+        <button class="btn-outline" onclick="fecharModal()">Cancelar</button>
+        <button class="btn-principal btn-salvar" onclick="salvarEdicao()">Salvar</button>
+      </div>
+    </div>
   </div>
 
   <script src="/static/script.js"></script>

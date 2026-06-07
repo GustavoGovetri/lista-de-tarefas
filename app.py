@@ -12,7 +12,6 @@ def get_db():
 
 def init_db():
     conn = get_db()
-
     conn.execute('''
         CREATE TABLE IF NOT EXISTS usuarios (
             id        INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -22,7 +21,6 @@ def init_db():
             criado_em TEXT DEFAULT (datetime('now','localtime'))
         )
     ''')
-
     conn.execute('''
         CREATE TABLE IF NOT EXISTS tarefas (
             id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -34,10 +32,8 @@ def init_db():
             FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
         )
     ''')
-
     conn.commit()
     conn.close()
-    print("Banco de dados pronto!")
 
 def login_obrigatorio(f):
     from functools import wraps
@@ -64,12 +60,11 @@ def cadastrar():
     if len(senha) < 6:
         return jsonify({'erro': 'A senha deve ter pelo menos 6 caracteres'}), 400
 
-    senha_hash = generate_password_hash(senha)
     try:
         conn = get_db()
         conn.execute(
             'INSERT INTO usuarios (nome, email, senha) VALUES (?, ?, ?)',
-            (nome, email, senha_hash)
+            (nome, email, generate_password_hash(senha))
         )
         conn.commit()
         conn.close()
@@ -84,9 +79,7 @@ def login():
     senha = dados.get('senha', '').strip()
 
     conn = get_db()
-    usuario = conn.execute(
-        'SELECT * FROM usuarios WHERE email = ?', (email,)
-    ).fetchone()
+    usuario = conn.execute('SELECT * FROM usuarios WHERE email = ?', (email,)).fetchone()
     conn.close()
 
     if not usuario or not check_password_hash(usuario['senha'], senha):
@@ -134,9 +127,7 @@ def criar_tarefa():
         (session['usuario_id'], titulo, descricao)
     )
     conn.commit()
-    nova = conn.execute(
-        'SELECT * FROM tarefas WHERE id = ?', (cursor.lastrowid,)
-    ).fetchone()
+    nova = conn.execute('SELECT * FROM tarefas WHERE id = ?', (cursor.lastrowid,)).fetchone()
     conn.close()
     return jsonify(dict(nova)), 201
 
@@ -153,20 +144,23 @@ def toggle_tarefa(tarefa_id):
         conn.close()
         return jsonify({'erro': 'Tarefa nao encontrada'}), 404
 
-    conn.execute(
-        'UPDATE tarefas SET feita = NOT feita WHERE id = ?', (tarefa_id,)
-    )
+    conn.execute('UPDATE tarefas SET feita = NOT feita WHERE id = ?', (tarefa_id,))
     conn.commit()
-    atualizada = conn.execute(
-        'SELECT * FROM tarefas WHERE id = ?', (tarefa_id,)
-    ).fetchone()
+    atualizada = conn.execute('SELECT * FROM tarefas WHERE id = ?', (tarefa_id,)).fetchone()
     conn.close()
     return jsonify(dict(atualizada))
 
-@app.route('/api/tarefas/<int:tarefa_id>', methods=['DELETE'])
+@app.route('/api/tarefas/<int:tarefa_id>', methods=['PUT'])
 @login_obrigatorio
-def deletar_tarefa(tarefa_id):
-    conn = get_db()
+def editar_tarefa(tarefa_id):
+    dados     = request.get_json()
+    titulo    = dados.get('titulo', '').strip()
+    descricao = dados.get('descricao', '').strip()
+
+    if not titulo:
+        return jsonify({'erro': 'Titulo e obrigatorio'}), 400
+
+    conn   = get_db()
     tarefa = conn.execute(
         'SELECT * FROM tarefas WHERE id = ? AND usuario_id = ?',
         (tarefa_id, session['usuario_id'])
@@ -177,9 +171,28 @@ def deletar_tarefa(tarefa_id):
         return jsonify({'erro': 'Tarefa nao encontrada'}), 404
 
     conn.execute(
-        'DELETE FROM tarefas WHERE id = ? AND usuario_id = ?',
-        (tarefa_id, session['usuario_id'])
+        'UPDATE tarefas SET titulo = ?, descricao = ? WHERE id = ?',
+        (titulo, descricao, tarefa_id)
     )
+    conn.commit()
+    atualizada = conn.execute('SELECT * FROM tarefas WHERE id = ?', (tarefa_id,)).fetchone()
+    conn.close()
+    return jsonify(dict(atualizada))
+
+@app.route('/api/tarefas/<int:tarefa_id>', methods=['DELETE'])
+@login_obrigatorio
+def deletar_tarefa(tarefa_id):
+    conn   = get_db()
+    tarefa = conn.execute(
+        'SELECT * FROM tarefas WHERE id = ? AND usuario_id = ?',
+        (tarefa_id, session['usuario_id'])
+    ).fetchone()
+
+    if not tarefa:
+        conn.close()
+        return jsonify({'erro': 'Tarefa nao encontrada'}), 404
+
+    conn.execute('DELETE FROM tarefas WHERE id = ? AND usuario_id = ?', (tarefa_id, session['usuario_id']))
     conn.commit()
     conn.close()
     return jsonify({'mensagem': 'Tarefa apagada!'})
